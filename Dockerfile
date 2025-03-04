@@ -1,7 +1,7 @@
-FROM python:3.9
+FROM python:3.12
 
 
-WORKDIR /godig
+WORKDIR /app
 
 
 COPY . /godig
@@ -16,4 +16,4 @@ ENV RDS_PASSWORD="your-rds-password"
 ENV RDS_DB="your-rds-db"
 
 
-CMD ["python", "sample_program.py"]
+CMD ["python", "app.py"]
