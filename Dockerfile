@@ -1,19 +1,10 @@
-FROM python:3.12
-
+FROM public.ecr.aws/lambda/python:3.12
 
 WORKDIR /app
 
+COPY requirements.txt .
+RUN pip install -r requirements.txt --no-cache-dir
 
-COPY . /godig
+COPY src/app.py .
 
-
-RUN pip install boto3 pymysql pandas
-
-
-ENV RDS_HOST="your-rds-host"
-ENV RDS_USER="your-rds-user"
-ENV RDS_PASSWORD="your-rds-password"
-ENV RDS_DB="your-rds-db"
-
-
-CMD ["python", "app.py"]
+CMD ["app.handler"]

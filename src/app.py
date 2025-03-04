@@ -1,5 +1,6 @@
 import boto3
 import os
+import psycopg2
 
 def handler(event, context):
     s3_bucket = os.environ.get('S3_BUCKET')
@@ -8,32 +9,26 @@ def handler(event, context):
     rds_user = os.environ.get('RDS_USER')
     rds_password = os.environ.get('RDS_PASSWORD')
     rds_database = os.environ.get('RDS_DATABASE')
-    glue_database = os.environ.get('GLUE_DATABASE')
-    glue_table = os.environ.get('GLUE_TABLE')
-
+    
     s3 = boto3.client('s3')
     try:
         response = s3.get_object(Bucket=s3_bucket, Key=s3_key)
         data = response['Body'].read().decode('utf-8')
-        
-
+        lines = data.splitlines()
         try:
-            import psycopg2
             conn = psycopg2.connect(host=rds_host, user=rds_user, password=rds_password, database=rds_database)
             cur = conn.cursor()
+            for line in lines:
+                values = line.split(",")
+                if len(values) == 2:
+                    cur.execute("INSERT INTO your_table (column1, column2) VALUES (%s, %s)", (values[0], values[1]))
             conn.commit()
             cur.close()
             conn.close()
             print("Data pushed to RDS successfully.")
         except Exception as rds_error:
             print(f"Failed to push to RDS: {rds_error}")
-
-            try:
-                glue = boto3.client('glue')
-                print("Data process attempted to RDS, now pushing to Glue")
-            except Exception as glue_error:
-                 print(f"Failed to push to Glue: {glue_error}")
-
+            print("Glue process must be triggered outside of this lambda function.")
     except Exception as s3_error:
         print(f"Failed to retrieve data from S3: {s3_error}")
     return {
